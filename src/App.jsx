@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PlayerProvider, usePlayer } from './context/PlayerContext';
 import { parseM3U } from './utils/parseM3U';
 import { generateTrackCover } from './utils/avatarGenerator';
@@ -7,8 +7,10 @@ import NowPlaying from './components/NowPlaying';
 import TrackList from './components/playlist/TrackList';
 import LyricsModal from './components/modals/LyricsModal';
 
+// کامپوننت داخلی برای بارگذاری داده‌ها
 const AppContent = () => {
   const { setTracks, tracks, currentTrack, nextTrack, prevTrack, togglePlay, setShowLyrics, showLyrics } = usePlayer();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPlaylist = async () => {
@@ -18,24 +20,35 @@ const AppContent = () => {
         console.log('📂 تلاش برای بارگذاری:', url);
         
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`خطای ${response.status}`);
+        console.log('📡 وضعیت پاسخ:', response.status, response.statusText);
+        
+        if (!response.ok) {
+          throw new Error(`خطای ${response.status}: ${response.statusText}`);
+        }
         
         const text = await response.text();
-        const parsed = parseM3U(text);
+        console.log('📄 محتوای فایل (۵۰ کاراکتر اول):', text.substring(0, 100));
         
-        // تولید کاور و تنظیم hasFile به true (چون خودمان فایل را قرار می‌دهیم)
+        const parsed = parseM3U(text);
+        console.log('🎵 تعداد آهنگ‌های پارس شده:', parsed.length);
+        
+        // تولید کاور برای هر آهنگ
         const withCovers = parsed.map(t => ({
           ...t,
           cover: generateTrackCover(t.artist, t.title, 300),
-          hasFile: true, // ← فرض می‌کنیم همه فایل‌ها در پوشه‌ی music/ وجود دارند
-          metadata: null,
+          hasFile: true, // فرض می‌کنیم همه فایل‌ها در سرور وجود دارند
         }));
         
-        console.log('✅ تعداد آهنگ‌های بارگذاری شده:', withCovers.length);
+        console.log('✅ تعداد آهنگ‌های ارسالی به PlayerContext:', withCovers.length);
+        console.log('✅ نمونه اولین آهنگ:', withCovers[0]);
+        
+        // 🔥 ارسال داده‌ها به Context
         setTracks(withCovers);
+        setLoading(false);
       } catch (err) {
-        console.error('❌ خطا:', err);
+        console.error('❌ خطای بارگذاری پلی‌لیست:', err);
         setTracks([]);
+        setLoading(false);
       }
     };
     
@@ -56,6 +69,17 @@ const AppContent = () => {
 
   const filesCount = tracks.filter(t => t.hasFile).length;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">🌌</div>
+          <p className="text-white/40">در حال بارگذاری لیست پخش...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative z-10 container mx-auto px-4 py-6 flex flex-col items-center gap-8 min-h-screen">
       
@@ -71,7 +95,7 @@ const AppContent = () => {
           <div className="flex flex-wrap justify-center gap-2">
             <span className="badge">🎵 {tracks.length} آهنگ</span>
             <span className="badge">📁 {filesCount} فایل در سرور</span>
-            <span className="badge">⚡ ۱۰۰% استاتیک</span>
+            <span className="badge">⚡ ۱۰۰% آفلاین</span>
             <span className="badge">⌨️ Space = پلی/مکث</span>
             {currentTrack && (
               <span className="badge badge-primary">🎧 {currentTrack.title}</span>
@@ -91,6 +115,7 @@ const AppContent = () => {
   );
 };
 
+// کامپوننت اصلی
 const App = () => {
   return (
     <PlayerProvider>
