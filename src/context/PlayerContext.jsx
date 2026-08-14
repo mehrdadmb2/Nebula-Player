@@ -23,10 +23,10 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
   const [shuffle, setShuffle] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showLyrics, setShowLyrics] = useState(false);
+  const [error, setError] = useState(null); // ← برای نمایش خطا
   
   const audioRef = useRef(null);
 
-  // 🔥 این useEffect هر بار که initialTracks تغییر کند اجرا می‌شود
   useEffect(() => {
     if (initialTracks.length === 0) return;
     
@@ -38,9 +38,8 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
     
     setTracks(enriched);
     setFilteredTracks(enriched);
-    console.log('📦 تعداد آهنگ‌های داخل Context (از initialTracks):', enriched.length);
-    console.log('📦 نمونه اولین آهنگ در Context:', enriched[0]);
-  }, [initialTracks]); // ← وابستگی به initialTracks
+    console.log('📦 تعداد آهنگ‌های داخل Context:', enriched.length);
+  }, [initialTracks]);
 
   // فیلتر جستجو
   useEffect(() => {
@@ -71,6 +70,7 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
 
   const playTrack = useCallback((index) => {
     if (index < 0 || index >= tracks.length) return;
+    setError(null); // پاک کردن خطا
     setCurrentIndex(index);
     setProgress(0);
     setIsPlaying(true);
@@ -98,7 +98,16 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
     playTrack(prevIdx);
   }, [currentIndex, progress, tracks.length, playTrack]);
 
-  const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
+  const togglePlay = useCallback(() => {
+    if (!currentTrack) return;
+    // اگر خطا داشت، ریست کن
+    if (error) {
+      setError(null);
+      playTrack(currentIndex);
+      return;
+    }
+    setIsPlaying(prev => !prev);
+  }, [currentTrack, error, currentIndex, playTrack]);
 
   const seekTo = useCallback((value) => {
     if (audioRef.current) {
@@ -106,6 +115,17 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
       setProgress(value);
     }
   }, []);
+
+  // مدیریت خطای پخش
+  const handleAudioError = useCallback((e) => {
+    console.warn('⚠️ خطا در پخش آهنگ:', e);
+    setError({
+      message: 'فایل صوتی یافت نشد. لطفاً فایل را در پوشه‌ی /music/ قرار دهید.',
+      track: currentTrack?.title
+    });
+    setIsPlaying(false);
+    // 🔥 به جای رفتن به آهنگ بعدی، متوقف می‌شویم
+  }, [currentTrack]);
 
   // ذخیره در لوکال استوریج
   useEffect(() => {
@@ -142,6 +162,8 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
     shuffle,
     searchQuery,
     showLyrics,
+    error,
+    setError,
     setShowLyrics,
     setSearchQuery,
     togglePlay,
@@ -170,12 +192,13 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
           volume={volume}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
-          onEnded={nextTrack}
-          onError={(e) => {
-            console.warn('⚠️ خطا در پخش آهنگ:', e);
-            // اگر خطا داشت، به آهنگ بعدی برو
-            nextTrack();
+          onEnded={() => {
+            // اگر خطایی نبود، برو به بعدی
+            if (!error) {
+              nextTrack();
+            }
           }}
+          onError={handleAudioError}
           onLoadedMetadata={() => {
             if (audioRef.current) {
               setDuration(audioRef.current.audioEl.current.duration || 0);
