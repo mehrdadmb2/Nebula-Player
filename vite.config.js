@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: './',   // ← این خط را به './' تغییر دهید
+  base: './',
 });
