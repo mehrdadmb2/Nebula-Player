@@ -1,6 +1,8 @@
+// src/components/playlist/TrackItem.jsx
 import React from 'react';
 import { usePlayer } from '../../context/PlayerContext';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Music2, FileAudio, AlertCircle } from 'lucide-react';
+import UploadButton from '../UploadButton';
 
 const TrackItem = ({ track, index }) => {
   const { currentTrack, playTrack, isPlaying, searchQuery } = usePlayer();
@@ -16,10 +18,18 @@ const TrackItem = ({ track, index }) => {
     );
   };
 
+  // نمایش اطلاعات متادیتا اگر موجود باشد
+  const hasMetadata = track.metadata && track.metadata.artist !== 'Unknown Artist';
+  const displayArtist = hasMetadata ? track.metadata.artist : track.artist;
+  const displayTitle = hasMetadata ? track.metadata.title : track.title;
+  const displayAlbum = track.metadata?.album || track.album || '';
+  const displayYear = track.metadata?.year || '';
+
   return (
     <div 
-      className={`track-item ${isActive ? 'active' : ''}`}
-      onClick={() => playTrack(index)}
+      className={`track-item ${isActive ? 'active' : ''} ${!track.hasFile ? 'opacity-70' : ''}`}
+      onClick={() => track.hasFile && playTrack(index)}
+      style={{ cursor: track.hasFile ? 'pointer' : 'default' }}
     >
       {/* شماره یا نشانگر پخش */}
       <div className="track-number">
@@ -54,26 +64,76 @@ const TrackItem = ({ track, index }) => {
 
       {/* اطلاعات */}
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${isActive ? 'text-purple-300' : 'text-white/80'}`}>
-          {highlightText(track.title, searchQuery)}
-        </p>
-        <p className="text-xs text-white/40 truncate">{highlightText(track.artist, searchQuery)}</p>
+        <div className="flex items-center gap-2">
+          <p className={`text-sm font-medium truncate ${isActive ? 'text-purple-300' : 'text-white/80'}`}>
+            {highlightText(displayTitle, searchQuery)}
+          </p>
+          {/* نشانگر فایل */}
+          {track.hasFile ? (
+            <FileAudio size={12} className="text-green-400 flex-shrink-0" />
+          ) : (
+            <AlertCircle size={12} className="text-yellow-500/50 flex-shrink-0" title="فایل آپلود نشده" />
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-white/40 truncate">{highlightText(displayArtist, searchQuery)}</span>
+          {displayAlbum && (
+            <>
+              <span className="text-white/20">•</span>
+              <span className="text-white/30 truncate">{displayAlbum}</span>
+            </>
+          )}
+          {displayYear && (
+            <>
+              <span className="text-white/20">•</span>
+              <span className="text-white/30">{displayYear}</span>
+            </>
+          )}
+          {track.metadata?.duration > 0 && (
+            <>
+              <span className="text-white/20">•</span>
+              <span className="text-white/30">{Math.floor(track.metadata.duration / 60)}:{String(Math.floor(track.metadata.duration % 60)).padStart(2, '0')}</span>
+            </>
+          )}
+          {track.metadata?.bitrate > 0 && (
+            <>
+              <span className="text-white/20">•</span>
+              <span className="text-white/30">{Math.floor(track.metadata.bitrate / 1000)}kbps</span>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* دکمه پلی سریع */}
-      <button 
-        className="text-white/20 hover:text-white transition p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          playTrack(index);
-        }}
-      >
-        {isActive && isPlaying ? (
-          <Pause size={16} className="text-purple-400" />
-        ) : (
-          <Play size={16} />
+      {/* دکمه‌های کناری */}
+      <div className="flex items-center gap-1">
+        {/* دکمه آپلود */}
+        <UploadButton track={track} />
+        
+        {/* دکمه پلی سریع (فقط اگر فایل دارد) */}
+        {track.hasFile && (
+          <button 
+            className="text-white/20 hover:text-white transition p-1.5 rounded-full hover:bg-white/5"
+            onClick={(e) => {
+              e.stopPropagation();
+              playTrack(index);
+            }}
+            title="پخش"
+          >
+            {isActive && isPlaying ? (
+              <Pause size={16} className="text-purple-400" />
+            ) : (
+              <Play size={16} />
+            )}
+          </button>
         )}
-      </button>
+        
+        {/* آیکون نشان‌دهنده‌ی عدم وجود فایل */}
+        {!track.hasFile && (
+          <div className="text-xs text-yellow-500/40 px-2 py-0.5 rounded-full bg-yellow-500/5 border border-yellow-500/10">
+            فایل نداره
+          </div>
+        )}
+      </div>
     </div>
   );
 };
