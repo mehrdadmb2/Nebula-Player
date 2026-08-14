@@ -11,7 +11,7 @@ const AppContent = () => {
 
   // لود کردن پلی‌لیست
   useEffect(() => {
-    fetch('./playlist.m3u8')
+    fetch(`${import.meta.env.BASE_URL}playlist.m3u8`)
       .then(res => {
         if (!res.ok) throw new Error('فایل پلی‌لیست پیدا نشد');
         return res.text();
