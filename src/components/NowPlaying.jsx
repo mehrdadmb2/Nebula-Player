@@ -4,7 +4,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { 
   Play, Pause, SkipForward, SkipBack, 
   Volume2, VolumeX, Shuffle, Repeat, 
-  Mic2, Heart, ListMusic 
+  Mic2, Heart, ListMusic, AlertCircle 
 } from 'lucide-react';
 
 const NowPlaying = () => {
@@ -12,7 +12,7 @@ const NowPlaying = () => {
     currentTrack, isPlaying, togglePlay, nextTrack, prevTrack,
     progress, duration, volume, setVolume, seekTo, 
     repeat, shuffle, setRepeat, setShuffle,
-    setShowLyrics, showLyrics, tracks
+    setShowLyrics, showLyrics, tracks, error, setError
   } = usePlayer();
 
   if (!currentTrack) {
@@ -37,6 +37,24 @@ const NowPlaying = () => {
   return (
     <div className="glass-premium p-6 rounded-3xl w-full max-w-5xl mx-auto transition-all duration-500 hover:border-white/15">
       
+      {/* نمایش خطا */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
+          <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-red-400 text-sm font-medium">خطا در پخش</p>
+            <p className="text-white/60 text-sm">{error.message}</p>
+            <p className="text-white/30 text-xs mt-1">آهنگ: {error.track}</p>
+            <button 
+              onClick={() => setError(null)}
+              className="mt-2 text-xs text-white/40 hover:text-white transition underline"
+            >
+              رد کردن خطا
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row items-center gap-8">
         <div className="relative flex-shrink-0">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-pink-500/20 blur-2xl -z-10"></div>
@@ -48,10 +66,16 @@ const NowPlaying = () => {
               e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentTrack.artist)}&background=7c3aed&color=fff&size=300`;
             }}
           />
-          {isPlaying && (
+          {isPlaying && !error && (
             <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-green-400 border border-green-400/20 flex items-center gap-1.5">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
               زنده
+            </div>
+          )}
+          {error && (
+            <div className="absolute bottom-3 right-3 bg-red-500/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-white flex items-center gap-1.5">
+              <AlertCircle size={12} />
+              خطا
             </div>
           )}
         </div>
@@ -66,9 +90,9 @@ const NowPlaying = () => {
             {[...Array(8)].map((_, i) => (
               <div 
                 key={i} 
-                className={`visualizer-bar ${!isPlaying ? 'inactive' : ''}`}
+                className={`visualizer-bar ${!isPlaying || error ? 'inactive' : ''}`}
                 style={{ 
-                  height: isPlaying ? `${8 + Math.random() * 20}px` : '6px',
+                  height: isPlaying && !error ? `${8 + Math.random() * 20}px` : '6px',
                   animationDelay: `${i * 0.08}s` 
                 }}
               ></div>
@@ -78,8 +102,8 @@ const NowPlaying = () => {
           <div className="flex flex-wrap justify-center lg:justify-start gap-2 mt-4">
             <span className="badge">🎵 {tracks.length} آهنگ</span>
             <span className="badge">⏱️ ~{Math.round(tracks.length * 3.5)} دقیقه</span>
-            <span className={`badge ${isPlaying ? 'badge-success' : ''}`}>
-              {isPlaying ? '🔊 در حال پخش' : '⏸ مکث'}
+            <span className={`badge ${isPlaying && !error ? 'badge-success' : error ? 'bg-red-500/20 text-red-400 border-red-500/20' : ''}`}>
+              {error ? '❌ خطا' : isPlaying ? '🔊 در حال پخش' : '⏸ مکث'}
             </span>
             {currentTrack.audioUrl && (
               <span className="badge badge-primary">🎧 قابل پخش</span>
@@ -116,7 +140,9 @@ const NowPlaying = () => {
               onChange={(e) => seekTo(parseFloat(e.target.value))}
               className="w-full"
               style={{
-                background: `linear-gradient(to right, #a855f7 0%, #ec4899 ${progressPercent}%, rgba(255,255,255,0.1) ${progressPercent}%, rgba(255,255,255,0.1) 100%)`
+                background: error 
+                  ? 'rgba(255,255,255,0.1)' 
+                  : `linear-gradient(to right, #a855f7 0%, #ec4899 ${progressPercent}%, rgba(255,255,255,0.1) ${progressPercent}%, rgba(255,255,255,0.1) 100%)`
               }}
             />
           </div>
@@ -161,9 +187,10 @@ const NowPlaying = () => {
           
           <button 
             onClick={togglePlay} 
-            className="bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-full shadow-2xl shadow-purple-500/30 hover:scale-105 transition-transform duration-200"
+            className={`bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-full shadow-2xl shadow-purple-500/30 hover:scale-105 transition-transform duration-200 ${error ? 'opacity-50' : ''}`}
+            disabled={!!error}
           >
-            {isPlaying ? <Pause size={32} fill="white" color="white" /> : <Play size={32} fill="white" color="white" />}
+            {isPlaying && !error ? <Pause size={32} fill="white" color="white" /> : <Play size={32} fill="white" color="white" />}
           </button>
           
           <button onClick={nextTrack} className="control-btn hover:scale-110 transition-transform">
