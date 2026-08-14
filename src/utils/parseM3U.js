@@ -1,8 +1,5 @@
 // src/utils/parseM3U.js
 
-/**
- * پارس کردن فایل M3U8 و تولید خودکار مسیر وب برای فایل‌های صوتی
- */
 export function parseM3U(content) {
   const lines = content.split('\n')
     .map(l => l.trim())
@@ -10,9 +7,9 @@ export function parseM3U(content) {
 
   return lines.map((line, index) => {
     const cleanPath = line.trim();
-    // 1. استخراج نام کامل فایل با پسوند (مثلاً changes.mp3)
+    // استخراج نام کامل فایل با پسوند
     const fileNameWithExt = cleanPath.split(/[\\/]/).pop() || 'unknown.mp3';
-    // 2. حذف پسوند برای نمایش عنوان
+    // حذف پسوند برای عنوان
     const fullName = fileNameWithExt.replace(/\.[^.]+$/, '');
 
     let artist = 'Unknown';
@@ -38,22 +35,20 @@ export function parseM3U(content) {
       title = fullName.substring(idx + 1).trim() || fullName;
     }
 
-    // 🔥 تولید خودکار مسیر وب برای فایل صوتی
+    // 🔥 ساخت مسیر وب برای فایل صوتی
     // فرض می‌کنیم فایل در پوشه‌ی /music/ با همان نام اصلی قرار دارد
-    const webAudioPath = `/music/${encodeURIComponent(fileNameWithExt)}`;
+    const encodedFileName = encodeURIComponent(fileNameWithExt);
+    const webAudioPath = `/music/${encodedFileName}`;
 
     return {
       id: `track-${index}`,
       rawPath: cleanPath,
       artist,
       title,
-      // 🎯 اینجا مسیر وب را به عنوان audioUrl قرار می‌دهیم
-      audioUrl: webAudioPath,
+      audioUrl: webAudioPath, // ← اینجا مسیر وب را تنظیم می‌کنیم
       cover: null,
       lyrics: '',
-      // متادیتا از فایل خوانده نمی‌شود، اما می‌توانید بعداً با کتابخانه music-metadata-browser آن را بخوانید
-      // فعلاً یک فیلد برای وضعیت فایل در نظر می‌گیریم
-      hasFile: true, // فرض می‌کنیم فایل وجود دارد
+      hasFile: true, // فرض می‌کنیم فایل در سرور وجود دارد
       metadata: null,
     };
   });
