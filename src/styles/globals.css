@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0b0b1a] min-h-screen overflow-x-hidden;
+    font-family: 'Inter', sans-serif;
+  }
+  /* اسکرول بار زیبا */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+  }
+}
+
+@layer components {
+  /* انیمیشن گرادیان پس‌زمینه سیار */
+  .animated-bg {
+    background: linear-gradient(-45deg, #0b0b1a, #1a1a3e, #2d1b4e, #1a1a3e);
+    background-size: 400% 400%;
+    animation: gradientShift 18s ease infinite;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -2;
+  }
+
+  /* افکت گلاس مورفیسم استادانه */
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-hover {
+    @apply transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02];
+  }
+
+  /* انیمیشن نبض برای آهنگ در حال پخش */
+  .pulse-glow {
+    animation: pulseGlow 2s infinite alternate;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes pulseGlow {
+    0% { box-shadow: 0 0 5px rgba(120, 80, 255, 0.3); }
+    100% { box-shadow: 0 0 25px rgba(120, 80, 255, 0.7); }
+  }
+}
