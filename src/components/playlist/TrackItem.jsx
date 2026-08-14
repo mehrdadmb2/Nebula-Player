@@ -4,7 +4,7 @@ import { usePlayer } from '../../context/PlayerContext';
 import { Play, Pause, CheckCircle, AlertCircle } from 'lucide-react';
 
 const TrackItem = ({ track, index }) => {
-  const { currentTrack, playTrack, isPlaying, searchQuery } = usePlayer();
+  const { currentTrack, playTrack, isPlaying, searchQuery, error } = usePlayer();
   const isActive = currentTrack?.id === track.id;
 
   const highlightText = (text, query) => {
@@ -17,10 +17,13 @@ const TrackItem = ({ track, index }) => {
     );
   };
 
+  const hasFile = track.audioUrl && !error;
+
   return (
     <div 
       className={`track-item ${isActive ? 'active' : ''}`}
-      onClick={() => playTrack(index)}
+      onClick={() => hasFile && playTrack(index)}
+      style={{ cursor: hasFile ? 'pointer' : 'default' }}
     >
       <div className="track-number">
         {isActive && isPlaying ? (
@@ -66,10 +69,10 @@ const TrackItem = ({ track, index }) => {
       </div>
 
       <button 
-        className="text-white/20 hover:text-white transition p-1.5 rounded-full hover:bg-white/5"
+        className={`text-white/20 hover:text-white transition p-1.5 rounded-full hover:bg-white/5 ${!track.audioUrl ? 'opacity-30 cursor-not-allowed' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
-          playTrack(index);
+          if (track.audioUrl) playTrack(index);
         }}
         disabled={!track.audioUrl}
       >
