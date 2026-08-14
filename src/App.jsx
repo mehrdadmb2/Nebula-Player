@@ -11,25 +11,40 @@ const AppContent = () => {
 
   // لود کردن پلی‌لیست
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}playlist.m3u8`)
-      .then(res => {
-        if (!res.ok) throw new Error('فایل پلی‌لیست پیدا نشد');
-        return res.text();
-      })
-      .then(text => {
-        const parsed = parseM3U(text);
-        const withCovers = parsed.map(t => ({
-          ...t,
-          cover: generateTrackCover(t.artist, t.title, 200)
-        }));
-        setTracks(withCovers);
-      })
-      .catch(err => {
-        console.error(err);
-        setTracks([]);
-      });
-  }, [setTracks]);
-
+  const loadPlaylist = async () => {
+    try {
+      // ساخت مسیر پویا با BASE_URL
+      const baseUrl = import.meta.env.BASE_URL || './';
+      const url = `${baseUrl}playlist.m3u8`;
+      console.log('📂 تلاش برای بارگذاری:', url);
+      
+      const response = await fetch(url);
+      console.log('📡 وضعیت پاسخ:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        throw new Error(`خطای ${response.status}: ${response.statusText}`);
+      }
+      
+      const text = await response.text();
+      console.log('📄 محتوای فایل (۵۰ کاراکتر اول):', text.substring(0, 100));
+      
+      const parsed = parseM3U(text);
+      console.log('🎵 تعداد آهنگ‌های پارس شده:', parsed.length);
+      
+      const withCovers = parsed.map(t => ({
+        ...t,
+        cover: generateTrackCover(t.artist, t.title, 200)
+      }));
+      
+      setTracks(withCovers);
+    } catch (err) {
+      console.error('❌ خطای بارگذاری پلی‌لیست:', err);
+      setTracks([]);
+    }
+  };
+  
+  loadPlaylist();
+}, [setTracks]);
   // کیبورد شورت‌کات (Space, ArrowRight, ArrowLeft)
   useEffect(() => {
     const handler = (e) => {
