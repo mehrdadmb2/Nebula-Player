@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-} from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import ReactAudioPlayer from 'react-audio-player';
 import { generateTrackCover } from '../utils/avatarGenerator';
 
@@ -13,12 +6,12 @@ const PlayerContext = createContext();
 
 export const usePlayer = () => {
   const ctx = useContext(PlayerContext);
-  if (!ctx) throw new Error('usePlayer must be used within Provider');
+  if (!ctx) throw new Error('usePlayer must be used within PlayerProvider');
   return ctx;
 };
 
 export const PlayerProvider = ({ children, initialTracks = [] }) => {
-  const [tracks, setTracks] = useState(initialTracks);
+  const [tracks, setTracks] = useState([]);
   const [filteredTracks, setFilteredTracks] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,36 +21,35 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
   const [repeat, setRepeat] = useState(false);
   const [shuffle, setShuffle] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const [showLyrics, setShowLyrics] = useState(false);
+  
   const audioRef = useRef(null);
 
-  // وقتی tracks تغییر می‌کند، filteredTracks را به‌روز کن
+  // وقتی ترک‌ها تغییر می‌کنند، کاور تولید کن
   useEffect(() => {
-    console.log('📦 تعداد آهنگ‌های داخل Context (useEffect):', tracks.length);
+    const enriched = initialTracks.map(t => ({
+      ...t,
+      cover: t.cover || generateTrackCover(t.artist, t.title, 300)
+    }));
+    setTracks(enriched);
+    setFilteredTracks(enriched);
+    console.log('📦 تعداد آهنگ‌های داخل Context:', enriched.length);
+    console.log('📦 نمونه اولین آهنگ در Context:', enriched[0]);
+  }, [initialTracks]);
+
+  // فیلتر جستجو
+  useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredTracks(tracks);
       return;
     }
     const q = searchQuery.toLowerCase();
-    const filtered = tracks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q)
+    const filtered = tracks.filter(t => 
+      t.title.toLowerCase().includes(q) || 
+      t.artist.toLowerCase().includes(q)
     );
     setFilteredTracks(filtered);
-  }, [tracks, searchQuery]);
-
-  // وقتی initialTracks تغییر می‌کند، آهنگ‌ها را با کاور غنی کن
-  useEffect(() => {
-    if (initialTracks.length > 0) {
-      const enriched = initialTracks.map((t) => ({
-        ...t,
-        cover: t.cover || generateTrackCover(t.artist, t.title, 200),
-      }));
-      setTracks(enriched);
-      setFilteredTracks(enriched);
-    }
-  }, [initialTracks]);
+  }, [searchQuery, tracks]);
 
   const currentTrack = tracks[currentIndex] || null;
 
@@ -72,15 +64,13 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
     return (currentIndex + 1) % tracks.length;
   }, [shuffle, currentIndex, tracks.length]);
 
-  const playTrack = useCallback(
-    (index) => {
-      if (index < 0 || index >= tracks.length) return;
-      setCurrentIndex(index);
-      setProgress(0);
-      setIsPlaying(true);
-    },
-    [tracks.length]
-  );
+  const playTrack = useCallback((index) => {
+    if (index < 0 || index >= tracks.length) return;
+    setCurrentIndex(index);
+    setProgress(0);
+    setIsPlaying(true);
+    console.log('▶️ پخش آهنگ:', tracks[index]?.title);
+  }, [tracks]);
 
   const nextTrack = useCallback(() => {
     if (tracks.length === 0) return;
@@ -103,7 +93,7 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
     playTrack(prevIdx);
   }, [currentIndex, progress, tracks.length, playTrack]);
 
-  const togglePlay = useCallback(() => setIsPlaying((prev) => !prev), []);
+  const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
 
   const seekTo = useCallback((value) => {
     if (audioRef.current) {
@@ -126,14 +116,11 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(
-      'nebula_state',
-      JSON.stringify({
-        index: currentIndex,
-        progress,
-        volume,
-      })
-    );
+    localStorage.setItem('nebula_state', JSON.stringify({
+      index: currentIndex,
+      progress,
+      volume,
+    }));
   }, [currentIndex, progress, volume]);
 
   const value = {
@@ -149,6 +136,8 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
     repeat,
     shuffle,
     searchQuery,
+    showLyrics,
+    setShowLyrics,
     setSearchQuery,
     togglePlay,
     nextTrack,
@@ -177,7 +166,10 @@ export const PlayerProvider = ({ children, initialTracks = [] }) => {
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={nextTrack}
-          onError={nextTrack}
+          onError={(e) => {
+            console.warn('⚠️ خطا در پخش آهنگ، رفتن به بعدی:', e);
+            nextTrack();
+          }}
           onLoadedMetadata={() => {
             if (audioRef.current) {
               setDuration(audioRef.current.audioEl.current.duration || 0);
