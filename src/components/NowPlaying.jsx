@@ -1,3 +1,4 @@
+// src/components/NowPlaying.jsx
 import React from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { 
@@ -36,9 +37,7 @@ const NowPlaying = () => {
   return (
     <div className="glass-premium p-6 rounded-3xl w-full max-w-5xl mx-auto transition-all duration-500 hover:border-white/15">
       
-      {/* بخش اصلی: کاور و اطلاعات */}
       <div className="flex flex-col lg:flex-row items-center gap-8">
-        {/* کاور آهنگ با افکت درخشش */}
         <div className="relative flex-shrink-0">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-pink-500/20 blur-2xl -z-10"></div>
           <img 
@@ -49,7 +48,6 @@ const NowPlaying = () => {
               e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentTrack.artist)}&background=7c3aed&color=fff&size=300`;
             }}
           />
-          {/* نشانگر پخش زنده */}
           {isPlaying && (
             <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-green-400 border border-green-400/20 flex items-center gap-1.5">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
@@ -58,17 +56,12 @@ const NowPlaying = () => {
           )}
         </div>
 
-        {/* اطلاعات آهنگ */}
         <div className="flex-1 text-center lg:text-left">
           <h2 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-purple-200 to-pink-200 bg-clip-text text-transparent leading-tight">
             {currentTrack.title}
           </h2>
           <p className="text-purple-300/80 text-lg font-light mt-1">{currentTrack.artist}</p>
-          {currentTrack.album && (
-            <p className="text-white/30 text-sm mt-0.5">{currentTrack.album}</p>
-          )}
           
-          {/* ویژوالایزر */}
           <div className="flex justify-center lg:justify-start gap-1 mt-4">
             {[...Array(8)].map((_, i) => (
               <div 
@@ -82,7 +75,6 @@ const NowPlaying = () => {
             ))}
           </div>
 
-          {/* بج‌های اطلاعات */}
           <div className="flex flex-wrap justify-center lg:justify-start gap-2 mt-4">
             <span className="badge">🎵 {tracks.length} آهنگ</span>
             <span className="badge">⏱️ ~{Math.round(tracks.length * 3.5)} دقیقه</span>
@@ -95,7 +87,6 @@ const NowPlaying = () => {
           </div>
         </div>
 
-        {/* دکمه‌های کناری */}
         <div className="flex lg:flex-col gap-2">
           <button 
             onClick={() => setShowLyrics(!showLyrics)}
@@ -113,7 +104,6 @@ const NowPlaying = () => {
         </div>
       </div>
 
-      {/* نوار پیشرفت */}
       <div className="mt-6">
         <div className="flex items-center gap-3">
           <span className="text-white/40 text-xs font-mono w-12 text-right">{formatTime(progress)}</span>
@@ -134,9 +124,7 @@ const NowPlaying = () => {
         </div>
       </div>
 
-      {/* کنترل‌های اصلی */}
       <div className="flex items-center justify-between mt-4">
-        {/* کنترل صدا */}
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setVolume(volume > 0 ? 0 : 0.8)} 
@@ -158,7 +146,6 @@ const NowPlaying = () => {
           />
         </div>
 
-        {/* دکمه‌های اصلی */}
         <div className="flex items-center gap-1 lg:gap-3">
           <button 
             onClick={() => setShuffle(!shuffle)} 
@@ -192,7 +179,6 @@ const NowPlaying = () => {
           </button>
         </div>
 
-        {/* اسپیس خالی برای symmetry */}
         <div className="w-20 lg:w-28"></div>
       </div>
     </div>
